@@ -1,11 +1,21 @@
 package com.hundsun.licensesdk.lang.aspect;
 
+import com.hundsun.licensesdk.common.util.CacheUtil;
+import com.hundsun.licensesdk.common.dto.Api;
+import com.hundsun.licensesdk.common.dto.Product;
+import com.hundsun.licensesdk.common.util.ValidateUtil;
+import com.hundsun.licensesdk.lang.annotation.LicenseApi;
+import com.hundsun.licensesdk.validation.LicenseResult;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
+import org.aspectj.lang.reflect.MethodSignature;
+
+import javax.annotation.PostConstruct;
+import java.lang.reflect.Method;
 
 
 /**
@@ -15,42 +25,49 @@ import org.aspectj.lang.annotation.Pointcut;
 public class LicenseAuthAspect {
     protected final Log logger = LogFactory.getLog(this.getClass());
 
+    @PostConstruct
+    private void init() {
+        //1.HTTP请求许可中心获取对应系统的许可文件
+        //2.解析许可文件，存放系统缓存中
+        Product product = new Product();
+        product.setLicenceNo("1111");
+        product.setBeginDate("20190610");
+        product.setExpireDate("20210610");
+        product.setProductInfo("操作员中心");
+        product.setUserInfo("admin from 操作员中心");
+        CacheUtil.getInstance().addCache(CacheUtil.PRODUCT_CACHE_NAME, product.getLicenceNo(), product);
+
+        Api api = new Api();
+        api.setFunctionId("111500");
+        api.setApiName("TEST");
+        CacheUtil.getInstance().addCache(CacheUtil.API_CACHE_NAME, api.getFunctionId(), api);
+    }
+
     @Pointcut(value = "@annotation(com.hundsun.licensesdk.lang.annotation.LicenseApi)")
     public void anyMethod() {
     }
 
     @Around("anyMethod()")
     public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
-        //获取请求报文头部元数据
-        /*ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
-        //获取请求对象
-        HttpServletRequest request = requestAttributes.getRequest();
-        //记录控制器执行前的时间毫秒数
-        System.out.println("前置通知执行：");
-        System.out.println("url:" + request.getRequestURL());
-        System.out.println("method:" + request.getMethod());
-        System.out.println("ip:" + request.getRemoteAddr());
-        System.out.println("class_method:" + joinPoint.getSignature().getDeclaringTypeName() +
-                "." + joinPoint.getSignature().getName());
-        System.out.println("args:" + Arrays.toString(joinPoint.getArgs()));*/
+        logger.info("================路过Aspect===================");
         long begin = System.currentTimeMillis();
         String name = joinPoint.getSignature().getName();
-        System.out.println("================路过Aspect===================");
 
+        //读取注解
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        Method method = signature.getMethod();
+        LicenseApi apiInfo = method.getAnnotation(LicenseApi.class);
+        //TODO 多余
+        /*if (apiInfo == null) {
+            return joinPoint.proceed();
+        }*/
+        LicenseResult result = ValidateUtil.apiCheck(apiInfo);
 
-        if (this.logger.isErrorEnabled()) {
-            this.logger.error("Failed to set bean properties on servlet '" + name + "'", new Exception());
-        }
-
-        logger.info(joinPoint.getSignature().getDeclaringTypeName());
-        logger.info(joinPoint.getSignature().getDeclaringType().getSimpleName());
-
-        logger.error("License校验失败");
         Object[] sourceArgs = joinPoint.getArgs();
-        sourceArgs[sourceArgs.length - 1] = new String("哈哈");
+        sourceArgs[sourceArgs.length - 1] = result;
         Object obj = joinPoint.proceed(sourceArgs);
 
-        System.out.println("方法：" + name + "执行结果：" + obj + "；耗时：" + (System.currentTimeMillis() - begin));
+        System.out.println("方法：" + name + "校验结果：" + obj + "；耗时：" + (System.currentTimeMillis() - begin));
 
      /*   String name = joinPoint.getSignature().getName();
         System.out.println(name + "方法的前置通知");
@@ -62,16 +79,9 @@ public class LicenseAuthAspect {
         }*//*
          *//*if(true){
             throw new AccessDeniedException("您无权操作！");
-        }*//*
-
-
-        //读取注解
-        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        Method method = signature.getMethod();
-        ParamsCheck paramsCheck = method.getAnnotation(ParamsCheck.class);
-        if (paramsCheck != null && paramsCheck.ignore()) {
-            joinPoint.proceed();
         }*/
+
+
         return obj;
     }
 

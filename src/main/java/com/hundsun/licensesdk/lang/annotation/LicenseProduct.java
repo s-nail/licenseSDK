@@ -8,25 +8,19 @@ import java.lang.annotation.*;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface LicenseApi {
+public @interface LicenseProduct {
     /**
-     * 接口名称
+     * 许可证编号
      *
      * @return
      */
-    String apiName() default "";
+    String licenceNo() default "";
 
     /**
-     * 接口功能号
+     * 许可证类型
      *
      * @return
      */
-    String functionId() default "";
+    String licenceType() default "";
 
-
-    /*String beginDate() default "";
-
-    String expireDate() default "";
-
-    String flowControl() default "";*/
 }
