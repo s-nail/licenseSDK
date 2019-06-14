@@ -14,7 +14,14 @@ import org.aspectj.lang.annotation.Pointcut;
 @Aspect
 public class LicenseAuthAspect {
     protected final Log logger = LogFactory.getLog(this.getClass());
+    //@Pointcut("execution(* com.hundsun.*.service.*.*(..))")
+    //@Pointcut("execution(* com.hundsun.*.service.*.*(..)) && within(@com.hundsun.licensesdk.lang.annotation.LicenseApi *)")
 
+    /**
+     * @within和@target针对类的注解,@annotation是针对方法的注解
+     */
+    //@Pointcut(value = "@within(com.hundsun.licensesdk.lang.annotation.LicenseApi)")
+    //@Pointcut(value = "target(com.hundsun.licensesdk.lang.annotation.LicenseApi)")//@target启动失败，报空指针
     @Pointcut(value = "@annotation(com.hundsun.licensesdk.lang.annotation.LicenseApi)")
     public void anyMethod() {
     }
