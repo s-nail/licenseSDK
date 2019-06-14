@@ -52,36 +52,18 @@ public class LicenseAuthAspect {
         logger.info("================路过Aspect===================");
         long begin = System.currentTimeMillis();
         String name = joinPoint.getSignature().getName();
-
         //读取注解
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
         Method method = signature.getMethod();
         LicenseApi apiInfo = method.getAnnotation(LicenseApi.class);
-        //TODO 多余
-        /*if (apiInfo == null) {
-            return joinPoint.proceed();
-        }*/
+
         LicenseResult result = ValidateUtil.apiCheck(apiInfo);
 
         Object[] sourceArgs = joinPoint.getArgs();
         sourceArgs[sourceArgs.length - 1] = result;
         Object obj = joinPoint.proceed(sourceArgs);
 
-        System.out.println("方法：" + name + "校验结果：" + obj + "；耗时：" + (System.currentTimeMillis() - begin));
-
-     /*   String name = joinPoint.getSignature().getName();
-        System.out.println(name + "方法的前置通知");
-
-        //和controller层返回值类型不同时，会报类型不匹配异常
-        *//*if(true){
-            List<Integer> list = new ArrayList<>();
-            return list;
-        }*//*
-         *//*if(true){
-            throw new AccessDeniedException("您无权操作！");
-        }*/
-
-
+        System.out.println("方法：" + name + "校验结果：" + result.getAllErrors().toString() + "；耗时：" + (System.currentTimeMillis() - begin));
         return obj;
     }
 
